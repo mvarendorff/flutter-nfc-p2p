@@ -1,0 +1,9 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    - prefer_final_locals
+    - prefer_relative_imports
+    - prefer_single_quotes
+    - require_trailing_commas
+    - prefer_const_constructors
