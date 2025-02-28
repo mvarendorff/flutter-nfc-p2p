@@ -45,5 +45,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>This permission is required for Nearby Connect to function</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This permission is required for Nearby Connect to function</string>
+	<key>NSBonjourServices</key>
+	<array>
+	    <string>_F22C0F62A6BB._tcp</string>
+	    <string>p2p-testing</string>
+	</array>
 </dict>
 </plist>
