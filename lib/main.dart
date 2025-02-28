@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'nfc_service.dart';
+import 'nearby_service.dart';
 import 'utils.dart';
 
 void main() {
@@ -33,14 +33,27 @@ class _NfcPlaygroundState extends State<NfcPlayground> {
 
   String _mine = '';
   String _theirs = '';
+  String _mode = '';
 
-  Future<void> _doNfcExchange() async {
+  Future<void> _doNearbyExchangeA() async {
     setState(() {
       _mine = _random.nextString(5);
       _theirs = '';
+      _mode = 'A';
     });
 
-    final receivedTheirs = await NfcService.doSomething();
+    final receivedTheirs = await NearbyService.exchangeAsAdvertiser(_mine);
+    setState(() => _theirs = receivedTheirs);
+  }
+
+  Future<void> _doNearbyExchangeD() async {
+    setState(() {
+      _mine = _random.nextString(5);
+      _theirs = '';
+      _mode = 'D';
+    });
+
+    final receivedTheirs = await NearbyService.exchangeAsDiscoverer(_mine);
     setState(() => _theirs = receivedTheirs);
   }
 
@@ -53,9 +66,14 @@ class _NfcPlaygroundState extends State<NfcPlayground> {
           children: <Widget>[
             Text('Mine: $_mine'),
             Text('Theirs: $_theirs'),
+            Text('Mode: $_mode'),
             OutlinedButton(
-              onPressed: _doNfcExchange,
-              child: const Text('Do NFC Exchange'),
+              onPressed: _doNearbyExchangeA,
+              child: const Text('Do Nearby Exchange (A)'),
+            ),
+            OutlinedButton(
+              onPressed: _doNearbyExchangeD,
+              child: const Text('Do Nearby Exchange (D)'),
             ),
           ],
         ),
