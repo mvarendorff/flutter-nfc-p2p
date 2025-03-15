@@ -34,13 +34,13 @@ class _NfcPlaygroundState extends State<NfcPlayground> {
   String _mine = '';
   String _theirs = '';
 
-  Future<void> _doNfcExchange() async {
+  Future<void> _doNfcExchange(bool sendFirst) async {
     setState(() {
       _mine = _random.nextString(5);
       _theirs = '';
     });
 
-    final receivedTheirs = await NfcService.doSomething();
+    final receivedTheirs = await NfcService.exchangeMessage(_mine, sendFirst);
     setState(() => _theirs = receivedTheirs);
   }
 
@@ -54,8 +54,12 @@ class _NfcPlaygroundState extends State<NfcPlayground> {
             Text('Mine: $_mine'),
             Text('Theirs: $_theirs'),
             OutlinedButton(
-              onPressed: _doNfcExchange,
-              child: const Text('Do NFC Exchange'),
+              onPressed: () => _doNfcExchange(true),
+              child: const Text('Do NFC Exchange (send first)'),
+            ),
+            OutlinedButton(
+              onPressed: () => _doNfcExchange(false),
+              child: const Text('Do NFC Exchange (receive first)'),
             ),
           ],
         ),
