@@ -1,16 +1,12 @@
 package com.example.flutter_nfc_p2p;
 
-import HceHostApi
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
-import java.nio.charset.StandardCharsets
+import io.flutter.Log
 
-class Hce : HceHostApi, HostApduService() {
-    private var message: String? = null
-    private var isConnected: Boolean = false
-    private var hasSent: Boolean = false
-    private var callback: ((Result<Unit>) -> Unit)? = null
+fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
 
+class Hce : HostApduService() {
     companion object {
         lateinit var instance: Hce
     }
@@ -19,40 +15,32 @@ class Hce : HceHostApi, HostApduService() {
         instance = this
     }
 
-    override fun exposeMessage(message: String, callback: (Result<Unit>) -> Unit) {
-        this.message = message;
-        this.callback = callback;
-
-        if (isConnected && !hasSent) {
-            hasSent = true
-            sendResponseApdu(getMessageApdu())
-            callback(Result.success(Unit))
-        }
-    }
-
     // We don't really care about the actual Apdu for now since it doesn't contain anything relevant
     override fun processCommandApdu(commandApdu: ByteArray, extras: Bundle?): ByteArray? {
-        isConnected = true
-        if (message != null) {
-            hasSent = true
-            callback?.invoke(Result.success(Unit))
-            return getMessageApdu()
+        val commandHex = commandApdu.toHex()
+        Log.i("P2P", "Received apdu $commandHex, processing...")
+        if (commandHex.startsWith("00a40400")) {
+            HceState.isConnected = true
+            return byteArrayOf(0x90.toByte(), 0x00)
+        }
+
+        if (HceState.message != null) {
+            Log.i("P2P", "We have a message, so we send that!")
+            HceState.hasSent = true
+            HceState.callback?.invoke(Result.success(Unit))
+            val messageApdu = HceState.getMessageApdu()
+            Log.i("P2P", "Sending apdu ${messageApdu.toHex()}")
+            return messageApdu
         }
 
         return null
     }
 
     override fun onDeactivated(reason: Int) {
-        message = null
-        isConnected = false
-        hasSent = false
-        callback = null
-    }
-
-    private fun getMessageApdu(): ByteArray {
-        // TODO cleaner Exception handling
-        val messageBytes = StandardCharsets.UTF_8.encode(message ?: throw Exception())
-
-        return messageBytes.array() + byteArrayOf(0x90.toByte(), 0x00)
+        Log.i("P2P", "HostApduService deactivated with code $reason")
+        HceState.message = null
+        HceState.isConnected = false
+        HceState.hasSent = false
+        HceState.callback = null
     }
 }
