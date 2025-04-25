@@ -6,7 +6,7 @@
 	<array>
 		<string>F09336709336</string>
 	</array>
-	<key>com.apple.developer.hce</key>
+	<key>com.apple.developer.nfc.hce</key>
 	<true/>
 </dict>
 </plist>

@@ -8,6 +8,7 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+      HceHostApiImpl.register(with: self.registrar(forPlugin: "HcePlugin")!)
+      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

@@ -1,25 +1,32 @@
+import Flutter
 import CoreNFC
 
-class HceHostApiImpl: HceHostApi {
+class HceHostApiImpl: NSObject, FlutterPlugin, HceHostApi {
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let messenger: FlutterBinaryMessenger = registrar.messenger();
+        let api: HceHostApi & NSObjectProtocol = HceHostApiImpl.init();
+        HceHostApiSetup.setUp(binaryMessenger: messenger, api: api)
+    }
+    
     private func getMessageApdu(message: String) -> Data {
-        let messageBytes = message.data(using: .utf8)
-        let successBytes = Data(0x90, 0x00)
+        let messageBytes = message.data(using: .utf8)!
+        let successBytes = Data.init([0x90, 0x00])
                 
         return messageBytes + successBytes
     }
     
     func exposeMessage(message: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        var hasSent: Bool
+        var hasSent = false
         
         let ProcessApdu: (_: Data) -> Data = {
-            capdu in return getMessageApdu(message: message)
+            capdu in return self.getMessageApdu(message: message)
         }
         
         Task() {
             guard NFCReaderSession.readingAvailable,
                   CardSession.isSupported,
                   await CardSession.isEligible else {
-                completion(.failure(PigeonError(code: "NOT_AVAILABLE", message: "CardSession is not available, supported or the device is not eligible.")))
+                completion(.failure(PigeonError(code: "NOT_AVAILABLE", message: "CardSession is not available, supported or the device is not eligible.", details: nil)))
                 return
             }
             
@@ -31,7 +38,7 @@ class HceHostApiImpl: HceHostApi {
                 presentmentIntent = try await NFCPresentmentIntentAssertion.acquire()
                 cardSession = try await CardSession()
             } catch {
-                completion(.failure(PigeonError(code: "STARTUP_FAIL", message: "Failed to acquire presentmentIntent or CardSession")))
+                completion(.failure(PigeonError(code: "STARTUP_FAIL", message: "Failed to acquire presentmentIntent or CardSession", details: nil)))
                 return
             }
             
@@ -63,7 +70,7 @@ class HceHostApiImpl: HceHostApi {
             }
             
             if (!hasSent) {
-                completion(.failure(PigeonError(code: "DID_NOT_SEND", message: "For some reason, no event caused sending a response :(")))
+                completion(.failure(PigeonError(code: "DID_NOT_SEND", message: "For some reason, no event caused sending a response :(", details: nil)))
             }
             
             presentmentIntent = nil
