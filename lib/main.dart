@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -33,15 +34,31 @@ class _NfcPlaygroundState extends State<NfcPlayground> {
 
   String _mine = '';
   String _theirs = '';
+  final List<String> _messages = [];
+  StreamSubscription<String>? _messageSubscription;
 
   Future<void> _doNfcExchange(bool sendFirst) async {
     setState(() {
       _mine = _random.nextString(5);
       _theirs = '';
+      _messages.clear();
     });
 
     final receivedTheirs = await NfcService.exchangeMessage(_mine, sendFirst);
     setState(() => _theirs = receivedTheirs);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _messageSubscription = NfcService.messages.stream
+        .listen((m) => setState(() => _messages.add(m)));
+  }
+
+  @override
+  void dispose() {
+    _messageSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -60,6 +77,11 @@ class _NfcPlaygroundState extends State<NfcPlayground> {
             OutlinedButton(
               onPressed: () => _doNfcExchange(false),
               child: const Text('Do NFC Exchange (receive first)'),
+            ),
+            Expanded(
+              child: ListView(
+                children: _messages.map((m) => Text(m)).toList(),
+              ),
             ),
           ],
         ),

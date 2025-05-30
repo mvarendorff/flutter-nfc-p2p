@@ -24,6 +24,7 @@ class Hce : HostApduService() {
             return byteArrayOf(0x90.toByte(), 0x00)
         }
 
+        HceState.message = "12345"
         if (HceState.message != null) {
             Log.i("P2P", "We have a message, so we send that!")
             HceState.hasSent = true
@@ -32,6 +33,8 @@ class Hce : HostApduService() {
             Log.i("P2P", "Sending apdu ${messageApdu.toHex()}")
             return messageApdu
         }
+
+        Log.i("P2P", "Didn't do anything because derp")
 
         return null
     }

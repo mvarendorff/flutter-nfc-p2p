@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -7,6 +8,7 @@ import 'pigeon/hce.g.dart';
 
 class NfcService {
   static final _hce = HceHostApi();
+  static final StreamController<String> messages = StreamController.broadcast();
 
   static Future<String> exchangeMessage(String message, bool sendFirst) async {
     if (sendFirst) await sendMessage(message);
@@ -17,29 +19,36 @@ class NfcService {
   }
 
   static Future<void> sendMessage(String message) async {
+    messages.add('Sending message $message by calling _hce.exposeMessage');
     await _hce.exposeMessage(message);
   }
 
   static Future<String> receiveMessage() async {
+    messages.add('Polling for nfc tag');
     final tag = await FlutterNfcKit.poll();
+    messages.add('Tag found!');
+
     if (tag.type != NFCTagType.iso7816) {
       await FlutterNfcKit.finish();
+      messages.add('Found tag type ${tag.type} which is invalid');
       throw Exception('Wrong tag type ${tag.type} found!');
     }
 
     await _selectP2pAid();
-    final responseBytes = await FlutterNfcKit.transceive(
-        Uint8List.fromList([0, 0, 0, 0, 0x01, 0, 0xFF]));
 
+    messages.add('Sending dummy payload to trigger response');
+    final responseBytes = await FlutterNfcKit.transceive(
+      Uint8List.fromList([0, 0, 0, 0, 0x01, 0, 0xFF]),
+    );
     final result = responseBytes.reversed.take(2).toList().reversed.toList();
-    if (result[0] == 0x90 && result[1] == 0x00) print('Result matched!');
+    if (result[0] == 0x90 && result[1] == 0x00) messages.add('Positive result');
 
     final mutableResponseBytes = List.of(responseBytes);
     mutableResponseBytes.length -= 2;
     await FlutterNfcKit.finish();
 
     final responseString = utf8.decode(mutableResponseBytes);
-    print('Received response $responseString');
+    messages.add('Received response $responseString');
 
     return responseString;
   }
@@ -53,11 +62,15 @@ class NfcService {
     apdu.setAll(selectAidCommand.length + 1, aid);
     apdu[apdu.length - 1] = 0x00;
 
-    print('Sending SELECT AID');
+    messages.add(
+      'Sending SELECT AID 0x${apdu.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}',
+    );
     final responseBytes = (await FlutterNfcKit.transceive(apdu));
-    print('Received SELECT AID response:');
-    print(responseBytes
-        .map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}')
-        .join(' '));
+    messages.add('Received SELECT AID response:');
+    messages.add(
+      responseBytes
+          .map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}')
+          .join(' '),
+    );
   }
 }
