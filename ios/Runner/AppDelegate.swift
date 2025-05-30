@@ -1,4 +1,5 @@
 import Flutter
+
 import UIKit
 
 @main
@@ -8,7 +9,7 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-      HceHostApiImpl.register(with: self.registrar(forPlugin: "HcePlugin")!)
-      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    HceHostApiImpl.register(with: self.registrar(forPlugin: "HcePlugin")!)
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

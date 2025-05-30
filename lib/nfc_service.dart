@@ -30,6 +30,7 @@ class NfcService {
     await _selectP2pAid();
     final responseBytes = await FlutterNfcKit.transceive(
         Uint8List.fromList([0, 0, 0, 0, 0x01, 0, 0xFF]));
+
     final result = responseBytes.reversed.take(2).toList().reversed.toList();
     if (result[0] == 0x90 && result[1] == 0x00) print('Result matched!');
 
